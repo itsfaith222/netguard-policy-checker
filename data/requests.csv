@@ -1,0 +1,13 @@
+device_name,device_type,vlan,source_ip,destination,port
+employee-laptop-01,employee,10,10.10.5.21,internal_app,443
+employee-laptop-02,employee,10,10.10.5.22,file_server,445
+guest-phone-01,guest,30,10.30.8.44,internet,443
+guest-tablet-02,guest,30,10.30.8.45,internet,80
+guest-laptop-03,guest,30,10.30.8.46,admin_panel,22
+security-camera-01,security,20,10.20.2.10,logging_server,514
+security-sensor-02,security,20,10.20.2.11,internal_app,443
+security-camera-03,security,20,10.20.2.12,internet,443
+admin-workstation-01,admin,40,10.40.1.15,admin_panel,22
+admin-workstation-02,admin,40,10.40.1.16,internal_app,443
+unknown-device-01,contractor,99,10.99.1.50,internet,443
+misplaced-guest-01,guest,10,10.10.5.99,internet,443
