@@ -1,7 +1,8 @@
 # NetGuard: Mini Network Access Policy Checker
 
-NetGuard is a beginner-friendly Python command-line project that checks network
-access requests against a small security policy.
+NetGuard is a beginner-friendly Python project that checks network access
+requests against a small security policy. It can run as a command-line report or
+as a local Flask dashboard at `http://127.0.0.1:5000`.
 
 It demonstrates common network security engineering ideas:
 
@@ -18,6 +19,11 @@ It demonstrates common network security engineering ideas:
 .
 ├── data/
 │   └── requests.csv
+├── static/
+│   └── style.css
+├── templates/
+│   └── index.html
+├── app.py
 ├── main.py
 ├── policy.py
 ├── test_policy.py
@@ -77,6 +83,47 @@ employee-laptop-01 employee   10     10.10.5.21      internal_app    443    ALLO
 guest-laptop-03    guest      30     10.30.8.46      admin_panel     22     DENY    Guest VLAN is segmented away from admin_panel; guests may only access internet ports 80 and 443.
 ```
 
+## Run the Dashboard
+
+Install dependencies first:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Start the local Flask app:
+
+```powershell
+python app.py
+```
+
+Then open:
+
+```text
+http://127.0.0.1:5000
+```
+
+The dashboard reads `data/requests.csv`, checks each row with the policy logic in
+`policy.py`, and displays the results in a table. It shows:
+
+- Device name, device type, IP address, VLAN, requested resource, and port
+- `ALLOW` or `DENY` decision for each request
+- A plain-English reason for each decision
+- Summary cards for total, allowed, denied, and most suspicious request
+- Filters for all requests, allowed requests, denied requests, and VLAN
+
+The processed data is also available as JSON:
+
+```text
+http://127.0.0.1:5000/api/requests
+```
+
+The API supports the same filters:
+
+```text
+http://127.0.0.1:5000/api/requests?decision=denied&vlan=30
+```
+
 ## Run Tests
 
 ```powershell
@@ -94,3 +141,26 @@ systems.
 
 Default deny means the program denies traffic unless a rule explicitly allows it.
 This is safer than allowing unknown traffic by accident.
+
+The Flask dashboard connects the browser to the existing Python policy code.
+`app.py` loads the CSV rows, converts each row into an `AccessRequest`, calls
+`evaluate_request()`, and sends the processed rows to `templates/index.html`.
+
+The table rows come from `data/requests.csv`. Python reads each CSV line as a
+dictionary, validates fields such as VLAN and port, and turns the result into a
+display-friendly row with a decision and reason.
+
+The allow/deny decision is calculated with a default-deny model. A request is
+allowed only when its device type, VLAN, destination, and port match an explicit
+rule in `policy.py`.
+
+This demonstrates network segmentation and firewall rules because each VLAN is
+treated as a separate network zone. The rules show how traffic between zones and
+resources can be limited to only what each device role needs.
+
+## What I Learned
+
+- How to separate policy logic from presentation code
+- How Flask routes can render HTML pages and return JSON APIs
+- How CSV data can become Python objects and then dashboard table rows
+- How default-deny firewall thinking reduces unnecessary network access

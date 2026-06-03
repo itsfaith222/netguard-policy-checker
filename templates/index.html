@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NetGuard Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="page-shell">
+        <header class="dashboard-header">
+            <div>
+                <p class="eyebrow">Local Policy Monitor</p>
+                <h1>NetGuard Dashboard</h1>
+            </div>
+            <a class="api-link" href="{{ url_for('api_requests') }}">JSON API</a>
+        </header>
+
+        <section class="summary-grid" aria-label="Policy summary">
+            <article class="summary-card">
+                <span>Total Requests</span>
+                <strong>{{ summary.total }}</strong>
+            </article>
+            <article class="summary-card allow-card">
+                <span>Allowed</span>
+                <strong>{{ summary.allowed }}</strong>
+            </article>
+            <article class="summary-card deny-card">
+                <span>Denied</span>
+                <strong>{{ summary.denied }}</strong>
+            </article>
+            <article class="summary-card suspicious-card">
+                <span>Most Suspicious</span>
+                {% if summary.suspicious %}
+                    <strong>{{ summary.suspicious.device_name }}</strong>
+                    <small>{{ summary.suspicious.destination }}:{{ summary.suspicious.port }}</small>
+                {% else %}
+                    <strong>None</strong>
+                    <small>No denied traffic found</small>
+                {% endif %}
+            </article>
+        </section>
+
+        <section class="controls" aria-label="Request filters">
+            <form method="get">
+                <div class="filter-group">
+                    <label for="decision">Decision</label>
+                    <select id="decision" name="decision">
+                        <option value="all" {% if selected_decision == "all" %}selected{% endif %}>Show all</option>
+                        <option value="allowed" {% if selected_decision == "allowed" %}selected{% endif %}>Only allowed</option>
+                        <option value="denied" {% if selected_decision == "denied" %}selected{% endif %}>Only denied</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="vlan">VLAN</label>
+                    <select id="vlan" name="vlan">
+                        <option value="">All VLANs</option>
+                        {% for vlan in vlans %}
+                            <option value="{{ vlan }}" {% if selected_vlan == vlan|string %}selected{% endif %}>VLAN {{ vlan }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit">Apply Filters</button>
+                <a class="reset-link" href="{{ url_for('dashboard') }}">Reset</a>
+            </form>
+        </section>
+
+        <section class="table-panel" aria-label="Processed network requests">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Device</th>
+                        <th>Type</th>
+                        <th>IP Address</th>
+                        <th>VLAN</th>
+                        <th>Resource</th>
+                        <th>Port</th>
+                        <th>Decision</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td>{{ row.device_name }}</td>
+                            <td>{{ row.device_type }}</td>
+                            <td>{{ row.source_ip }}</td>
+                            <td>{{ row.vlan }}</td>
+                            <td>{{ row.destination }}</td>
+                            <td>{{ row.port }}</td>
+                            <td>
+                                <span class="status-pill {{ 'allow' if row.allowed else 'deny' }}">
+                                    {{ row.decision }}
+                                </span>
+                            </td>
+                            <td>{{ row.reason }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td class="empty-state" colspan="8">No requests match the selected filters.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>

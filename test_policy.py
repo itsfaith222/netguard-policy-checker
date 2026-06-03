@@ -1,4 +1,5 @@
 from policy import AccessRequest, evaluate_request
+from app import app, get_processed_requests
 
 
 def make_request(device_type: str, vlan: int, destination: str, port: int) -> AccessRequest:
@@ -68,3 +69,34 @@ def test_unlisted_access_is_denied_by_default():
 
     assert decision.allowed is False
     assert "default deny" in decision.reason
+
+
+def test_dashboard_processes_csv_requests_with_decisions():
+    rows = get_processed_requests()
+
+    assert len(rows) == 12
+    assert rows[0]["decision"] == "ALLOW"
+    assert rows[1]["decision"] == "DENY"
+    assert "reason" in rows[0]
+
+
+def test_api_requests_returns_processed_json():
+    client = app.test_client()
+
+    response = client.get("/api/requests")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 12
+    assert {"ALLOW", "DENY"} == {row["decision"] for row in data}
+
+
+def test_api_requests_can_filter_denied_vlan():
+    client = app.test_client()
+
+    response = client.get("/api/requests?decision=denied&vlan=30")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 1
+    assert data[0]["device_name"] == "guest-laptop-03"
